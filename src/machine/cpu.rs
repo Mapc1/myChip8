@@ -173,6 +173,23 @@ impl CPU {
         Ok(())
     }
 
+    pub fn cycle(&mut self) {
+        self.opcode = ((self.mem[self.prg_counter as usize] as u16) << 8) | self.mem[self.prg_counter as usize + 1] as u16;
+
+        self.prg_counter += 2;
+
+        let code = (self.opcode & 0xF000) >> 12;
+        self.lookup_table.get(&code).unwrap() (self);
+
+        if self.delay_timer > 0 {
+            self.delay_timer -= 1;
+        }
+
+        if self.sound_timer > 0 {
+            self.delay_timer -= 1;
+        }
+    }
+
     fn rng(&mut self) -> u8 {
         random()
     } 
