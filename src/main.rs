@@ -1,9 +1,9 @@
 mod machine;
 
-use machine::chip8::CHIP8;
+use machine::cpu::CPU;
 
 fn main() {
-    let mut chip:CHIP8 = CHIP8::new();
+    let mut chip:CPU = CPU::new();
 
     chip.load_rom("games/PONG").expect("Error loading Rom!");
 }
