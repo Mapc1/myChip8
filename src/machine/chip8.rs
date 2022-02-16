@@ -30,9 +30,9 @@ const FONT_SET: [u8; 80] = [      // 16 Characters of 5 bytes each = 80 bytes
 	0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 ];
 
-type INSTRUCTION = fn(&mut CPU);
+type INSTRUCTION = fn(&mut CHIP8);
 
-pub struct CPU {
+pub struct CHIP8 {
     mem: [u8; MEM_SIZE],
     display_mem: [u32; DISP_SIZE],
     v_regs: [u8; 16],
@@ -53,7 +53,7 @@ pub struct CPU {
     lookup_table_f: HashMap<u16, INSTRUCTION>
 }
 
-impl CPU {
+impl CHIP8 {
     fn load_chars(&mut self) {
         for i in 0..FONT_SET.len() {
             self.mem[i+FONT_SET_START_ADDR] = FONT_SET[i];
@@ -90,48 +90,48 @@ impl CPU {
      * is what we have.
      */
     fn add_ops(&mut self) {
-        self.lookup_table.insert(0x0, CPU::search_table_0);
-        self.lookup_table.insert(0x1, CPU::op_1nnn);
-        self.lookup_table.insert(0x2, CPU::op_2nnn);
-        self.lookup_table.insert(0x3, CPU::op_3xkk);
-        self.lookup_table.insert(0x4, CPU::op_4xkk);
-        self.lookup_table.insert(0x5, CPU::op_5xy0);
-        self.lookup_table.insert(0x6, CPU::op_6xkk);
-        self.lookup_table.insert(0x7, CPU::op_7xkk);
-        self.lookup_table.insert(0x8, CPU::search_table_8);
-        self.lookup_table.insert(0x9, CPU::op_9xy0);
-        self.lookup_table.insert(0xA, CPU::op_annn);
-        self.lookup_table.insert(0xB, CPU::op_bnnn);
-        self.lookup_table.insert(0xC, CPU::op_cxkk);
-        self.lookup_table.insert(0xD, CPU::op_dxyn);
-        self.lookup_table.insert(0xE, CPU::search_table_e);
-        self.lookup_table.insert(0xF, CPU::search_table_f);
+        self.lookup_table.insert(0x0, CHIP8::search_table_0);
+        self.lookup_table.insert(0x1, CHIP8::op_1nnn);
+        self.lookup_table.insert(0x2, CHIP8::op_2nnn);
+        self.lookup_table.insert(0x3, CHIP8::op_3xkk);
+        self.lookup_table.insert(0x4, CHIP8::op_4xkk);
+        self.lookup_table.insert(0x5, CHIP8::op_5xy0);
+        self.lookup_table.insert(0x6, CHIP8::op_6xkk);
+        self.lookup_table.insert(0x7, CHIP8::op_7xkk);
+        self.lookup_table.insert(0x8, CHIP8::search_table_8);
+        self.lookup_table.insert(0x9, CHIP8::op_9xy0);
+        self.lookup_table.insert(0xA, CHIP8::op_annn);
+        self.lookup_table.insert(0xB, CHIP8::op_bnnn);
+        self.lookup_table.insert(0xC, CHIP8::op_cxkk);
+        self.lookup_table.insert(0xD, CHIP8::op_dxyn);
+        self.lookup_table.insert(0xE, CHIP8::search_table_e);
+        self.lookup_table.insert(0xF, CHIP8::search_table_f);
 
-        self.lookup_table_0.insert(0x0, CPU::op_00e0);
-        self.lookup_table_0.insert(0xE, CPU::op_00ee);
+        self.lookup_table_0.insert(0x0, CHIP8::op_00e0);
+        self.lookup_table_0.insert(0xE, CHIP8::op_00ee);
 
-        self.lookup_table_8.insert(0x0, CPU::op_8xy0);
-        self.lookup_table_8.insert(0x1, CPU::op_8xy1);
-        self.lookup_table_8.insert(0x4, CPU::op_8xy2);
-        self.lookup_table_8.insert(0x3, CPU::op_8xy3);
-        self.lookup_table_8.insert(0x4, CPU::op_8xy4);
-        self.lookup_table_8.insert(0x5, CPU::op_8xy5);
-        self.lookup_table_8.insert(0x6, CPU::op_8xy6);
-        self.lookup_table_8.insert(0x7, CPU::op_8xy7);
-        self.lookup_table_8.insert(0xE, CPU::op_8xye);
+        self.lookup_table_8.insert(0x0, CHIP8::op_8xy0);
+        self.lookup_table_8.insert(0x1, CHIP8::op_8xy1);
+        self.lookup_table_8.insert(0x4, CHIP8::op_8xy2);
+        self.lookup_table_8.insert(0x3, CHIP8::op_8xy3);
+        self.lookup_table_8.insert(0x4, CHIP8::op_8xy4);
+        self.lookup_table_8.insert(0x5, CHIP8::op_8xy5);
+        self.lookup_table_8.insert(0x6, CHIP8::op_8xy6);
+        self.lookup_table_8.insert(0x7, CHIP8::op_8xy7);
+        self.lookup_table_8.insert(0xE, CHIP8::op_8xye);
 
-        self.lookup_table_e.insert(0x1, CPU::op_exa1);
-        self.lookup_table_e.insert(0xE, CPU::op_ex9e);
+        self.lookup_table_e.insert(0x1, CHIP8::op_exa1);
+        self.lookup_table_e.insert(0xE, CHIP8::op_ex9e);
 
-        self.lookup_table_f.insert(0x07, CPU::op_fx07);
-        self.lookup_table_f.insert(0x0A, CPU::op_fx0a);
-        self.lookup_table_f.insert(0x15, CPU::op_fx15);
-        self.lookup_table_f.insert(0x18, CPU::op_fx18);
-        self.lookup_table_f.insert(0x1E, CPU::op_fx1e);
-        self.lookup_table_f.insert(0x29, CPU::op_fx29);
-        self.lookup_table_f.insert(0x33, CPU::op_fx33);
-        self.lookup_table_f.insert(0x55, CPU::op_fx55);
-        self.lookup_table_f.insert(0x65, CPU::op_fx65);
+        self.lookup_table_f.insert(0x07, CHIP8::op_fx07);
+        self.lookup_table_f.insert(0x0A, CHIP8::op_fx0a);
+        self.lookup_table_f.insert(0x15, CHIP8::op_fx15);
+        self.lookup_table_f.insert(0x18, CHIP8::op_fx18);
+        self.lookup_table_f.insert(0x1E, CHIP8::op_fx1e);
+        self.lookup_table_f.insert(0x29, CHIP8::op_fx29);
+        self.lookup_table_f.insert(0x33, CHIP8::op_fx33);
+        self.lookup_table_f.insert(0x55, CHIP8::op_fx55);
+        self.lookup_table_f.insert(0x65, CHIP8::op_fx65);
     }
 
     pub fn new() -> Self{
