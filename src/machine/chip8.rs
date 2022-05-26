@@ -3,10 +3,10 @@ use std::fs::File;
 use std::collections::HashMap;
 use rand::random;
 
-const MEM_SIZE: usize = 4096;
-const DISP_SIZE: usize = 2048; // 64x32 pixels
-const DISP_WIDTH: u8 = 64;
-const DISP_HEIGHT: u8 = 32;
+pub const MEM_SIZE: usize = 4096;
+pub const DISP_SIZE: usize = 2048; // 64x32 pixels
+pub const DISP_WIDTH: u8 = 64;
+pub const DISP_HEIGHT: u8 = 32;
 
 const PROG_START_ADDR: usize = 0x200;
 
@@ -54,6 +54,10 @@ pub struct CHIP8 {
 }
 
 impl CHIP8 {
+    pub fn get_pixel(&mut self, x: usize, y: usize) -> u32 {
+        self.display_mem[(x * DISP_WIDTH as usize) + y]
+    }
+
     fn load_chars(&mut self) {
         for i in 0..FONT_SET.len() {
             self.mem[i+FONT_SET_START_ADDR] = FONT_SET[i];
@@ -61,7 +65,7 @@ impl CHIP8 {
     }
 
     fn search_table_0(&mut self) {
-        let code = self.opcode & 0x000F;
+        let code = self.opcode & 0x00FF;
 
         self.lookup_table_0.get(&code).unwrap() (self);
     }
@@ -73,13 +77,13 @@ impl CHIP8 {
     }
 
     fn search_table_e(&mut self) {
-        let code = self.opcode & 0x000F;
+        let code = self.opcode & 0x00FF;
         
         self.lookup_table_e.get(&code).unwrap() (self);
     }
 
     fn search_table_f(&mut self) {
-        let code = self.opcode & 0x000F;
+        let code = self.opcode & 0x00FF;
         
         self.lookup_table_f.get(&code).unwrap() (self);
     }
@@ -107,12 +111,12 @@ impl CHIP8 {
         self.lookup_table.insert(0xE, CHIP8::search_table_e);
         self.lookup_table.insert(0xF, CHIP8::search_table_f);
 
-        self.lookup_table_0.insert(0x0, CHIP8::op_00e0);
-        self.lookup_table_0.insert(0xE, CHIP8::op_00ee);
+        self.lookup_table_0.insert(0xE0, CHIP8::op_00e0);
+        self.lookup_table_0.insert(0xEE, CHIP8::op_00ee);
 
         self.lookup_table_8.insert(0x0, CHIP8::op_8xy0);
         self.lookup_table_8.insert(0x1, CHIP8::op_8xy1);
-        self.lookup_table_8.insert(0x4, CHIP8::op_8xy2);
+        self.lookup_table_8.insert(0x2, CHIP8::op_8xy2);
         self.lookup_table_8.insert(0x3, CHIP8::op_8xy3);
         self.lookup_table_8.insert(0x4, CHIP8::op_8xy4);
         self.lookup_table_8.insert(0x5, CHIP8::op_8xy5);
@@ -120,8 +124,8 @@ impl CHIP8 {
         self.lookup_table_8.insert(0x7, CHIP8::op_8xy7);
         self.lookup_table_8.insert(0xE, CHIP8::op_8xye);
 
-        self.lookup_table_e.insert(0x1, CHIP8::op_exa1);
-        self.lookup_table_e.insert(0xE, CHIP8::op_ex9e);
+        self.lookup_table_e.insert(0xA1, CHIP8::op_exa1);
+        self.lookup_table_e.insert(0x9E, CHIP8::op_ex9e);
 
         self.lookup_table_f.insert(0x07, CHIP8::op_fx07);
         self.lookup_table_f.insert(0x0A, CHIP8::op_fx0a);
@@ -186,7 +190,7 @@ impl CHIP8 {
         }
 
         if self.sound_timer > 0 {
-            self.delay_timer -= 1;
+            self.sound_timer -= 1;
         }
     }
 
@@ -303,7 +307,7 @@ impl CHIP8 {
         let vx = ((self.opcode & 0x0F00) >> 8) as usize;
         let vy = ((self.opcode & 0x00F0) >> 4) as usize;
 
-        let sum: u16 = (self.v_regs[vx] + self.v_regs[vy]) as u16;
+        let sum: u16 = self.v_regs[vx] as u16 + self.v_regs[vy] as u16;
         
         if sum > 255 {
             self.v_regs[0xF] = 1;
